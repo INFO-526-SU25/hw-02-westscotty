@@ -20,17 +20,12 @@ if (!require("pacman"))
 pacman::p_load(
     dplyr,
     forcats,
+    fs,
     ggridges,
-    ggplot2,
-    ggthemes,
-    glue,
-    grid,
-    gridExtra,
-    knitr,
-    lubridate,
-    openintro,
+    janitor,
     readr,
-    scales,
+    stringr,
+    tidyverse,
     viridis
 )
 
@@ -126,7 +121,70 @@ The `ridgeline` plot above visualizes the distribution of Airbnb review scores a
 
 ## 2 - Foreign Connected PACs
 
-```{r}
+```{r load_data_problem_2}
+# get a list of files with "Foreign Connected PAC" in their names
+list_of_files <- dir_ls(path = "data", regexp = "Foreign Connected PAC")
+
+# read all files and row bind them
+# keeping track of the file name in a new column called year
+pac <- read_csv(list_of_files, id = "year")
+glimpse(pac)
+```
+
+```{r extend_data_problem_2}
+pac <- pac |>
+    clean_names() |>
+    separate(
+        country_of_origin_parent_company,
+        into = c("country", "parent_company"),
+        sep = "/", 
+        remove = TRUE) |>
+
+    mutate(
+        year = str_extract(year, "\\d{4}-\\d{4}"),
+        year = str_extract(year, "\\d{4}$"),
+        year = as.integer(year)
+    ) |>
+
+    select(-total)
+
+pac
+
+pac <- pac |>
+    pivot_longer(
+        cols = c(dems, repubs),
+        names_to = "party",
+        values_to = "amount"
+    ) |>
+
+    mutate(
+        amount = str_remove(amount, "\\$"),
+        amount = as.integer(amount)
+    )
+
+pac
+```
+
+```{r summarize_party_amounts_problem_2}
+uk_spending <- pac |>
+    filter(country == "UK") |>
+    group_by(year, party) |>
+
+    summarise(
+        totals = sum(amount[amount != 0],
+                     na.rm = TRUE), 
+        .groups = "drop") |>
+
+    arrange(year, party)
+
+uk_spending
+```
+
+```{r plot_uk_spending_problem_2}
+ggplot(data = uk_spending, 
+       aes(x = year, y = totals, color = party)) +
+
+geom_line()
 
 ```
 

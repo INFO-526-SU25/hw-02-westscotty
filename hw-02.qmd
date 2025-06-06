@@ -1,30 +1,137 @@
 ---
 title: "HW 02"
-author: "INSERT YOUR NAME HERE"
+author: "Weston Scott"
 format: 
   html:
     embed-resources: true
 toc: true
+editor:
+  render-on-save: true
+execute:
+  warning: false
+# bibliography: references.bib
 ---
+
+```{r library_setup, include=FALSE}
+if (!require("pacman")) 
+    install.packages("pacman")
+
+# Use pacman::p_load to install and load CRAN packages
+pacman::p_load(
+    dplyr,
+    forcats,
+    ggridges,
+    ggplot2,
+    ggthemes,
+    glue,
+    grid,
+    gridExtra,
+    knitr,
+    lubridate,
+    openintro,
+    readr,
+    scales,
+    viridis
+)
+
+# Handle GitHub package separately
+if (!require("dsbox")) {
+      # Install devtools if not present
+      if (!require("devtools")) 
+          install.packages("devtools")
+devtools::install_github("tidyverse/dsbox")
+      library(dsbox)
+}
+```
+
+```{r set_uniform_displays, include=FALSE}
+# set theme for ggplot2
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+# set width of code output
+options(width = 65)
+
+# set figure parameters for knitr
+knitr::opts_chunk$set(
+  fig.width = 7, # 7" width
+  fig.asp = 0.618, # the golden ratio
+  fig.retina = 3, # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300 # higher dpi, sharper image
+)
+```
 
 ## 1 - A new day, a new plot, a new geom
 
-```{r}
-#| label: label-me-1
+```{r load_data_problem_1}
+edibnb <- dsbox::edibnb
+glimpse(edibnb)
+summary(edibnb)
 
+edibnb <- edibnb |>
+    mutate(
+        neighbourhood = fct_reorder(
+            neighbourhood, 
+            review_scores_rating, 
+            .fun = median)
+    ) |>
+    filter(!is.na(neighbourhood))
 ```
+
+```{r ridgeline_plot_problem_1}
+ggplot(
+    data = edibnb, 
+    aes(
+        x = review_scores_rating, 
+        y = neighbourhood, 
+        fill = neighbourhood
+    )
+) +
+    
+geom_density_ridges(
+    scale = 2,
+    rel_min_height = 0.01,
+    legend.show = FALSE,
+    alpha = 0.8
+) +
+
+scale_fill_viridis_d(
+    option = "C", 
+    begin = 0.1, 
+    end = 0.9
+) +
+
+scale_y_discrete(expand = c(0, 0)) + 
+scale_x_continuous(
+    expand = c(0, 0.25),
+    limits = c(90, 100)
+) + 
+
+coord_cartesian(clip = "off") +
+labs(
+    title = "Problem 1 - Ridgeline plot", 
+    subtitle = "Airbnb listings: Edinburgh, Scotland",
+    x = "Review Score Ratings",
+    y = "Edinburgh\nNeighborhoods", 
+    caption = "Source: Opensource dataset dsbox::edibnb"
+) +
+
+theme_ridges() +
+theme(legend.position = "none")
+```
+
+### Intepretation
+
+The `ridgeline` plot above visualizes the distribution of Airbnb review scores across different Edinburgh neighborhoods, ordered by their respective median review scores. The neighborhoods with the highest overall reviews appear at the top of the plot with a descending order down the plot to the neighborhoods with the lowest review scores. Most review scores cluster tightly between 90 and 100 (x-axis), suggesting generally positive experiences overall in the set of reviews. However, some neighborhoods display broader distributions or lower medians. A broader distribution indicates that the reviews have a larger spread along the review spectrum.
 
 ## 2 - Foreign Connected PACs
 
 ```{r}
-#| label: label-me-2
 
 ```
 
 ## 3 - Median housing prices in the US
 
-
 ## 4 - Expect More. Plot More.
-
 
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?

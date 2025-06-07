@@ -23,8 +23,10 @@ pacman::p_load(
     fs,
     ggridges,
     janitor,
+    lubridate,
     paste,
     readr,
+    scales,
     stringr,
     tidyverse,
     viridis
@@ -188,7 +190,7 @@ ggplot(data = uk_spending,
 geom_line() +
 scale_color_manual(values = c("repubs" = "red", 
                               "dems" = "blue"),
-                  labels = c("Republicans", "Democrats")) +
+                  labels = c("Democrats", "Republicans")) +
 scale_x_continuous(breaks = seq(1996, 2022, by = 4),
                    labels = seq(1996, 2022, by = 4)) +
 scale_y_continuous(labels = function(x) paste0("$", round(x), "M")) +
@@ -202,14 +204,158 @@ labs(
 ) +
 theme_minimal() +
 theme(
-    axis.title.y = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0), hjust = 0),
-    axis.title.x = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0), hjust = 0),
+    axis.title.y = element_text(margin = margin(t = 0, r = 0, 
+                                                b = 0, l = 0),
+                                hjust = 0),
+    axis.title.x = element_text(margin = margin(t = 0, r = 0, 
+                                                b = 0, l = 0), 
+                                hjust = 0),
     legend.position = c(0.87, 0.15)
 )
 
 ```
 
+```{r plot_other_country_spending_problem_2}
+swiss_spending <- pac |>
+    filter(country == "Switzerland") |>
+    group_by(year, party) |>
+
+    summarise(
+        totals = sum(amount[amount != 0],
+                     na.rm = TRUE), 
+        .groups = "drop") |>
+
+    arrange(year, party)
+
+
+ggplot(data = swiss_spending, 
+       aes(x = year, y = totals / 1e6, color = party)) +
+
+geom_line() +
+scale_color_manual(values = c("repubs" = "red", 
+                              "dems" = "blue"),
+                  labels = c("Democrats", "Republicans")) +
+scale_x_continuous(breaks = seq(1996, 2022, by = 4),
+                   labels = seq(1996, 2022, by = 4)) +
+scale_y_continuous(labels = function(x) paste0("$", round(x), "M")) +
+
+labs(
+    title = "Contributions to US political parties from Swiss-connected PACs",
+    color = "Party",
+    x = "Year",
+    y = "Total amount",
+    caption = "Source: OpenSecrets.org"
+) +
+theme_minimal() +
+theme(
+    axis.title.y = element_text(margin = margin(t = 0, r = 0, 
+                                                b = 0, l = 0), 
+                                hjust = 0),
+    axis.title.x = element_text(margin = margin(t = 0, r = 0, 
+                                                b = 0, l = 0), 
+                                hjust = 0),
+    legend.position = c(0.87, 0.15)
+)
+
+```
+
+### Intepretation
+
+Contributions from Swiss-connected PACs to U.S. political parties have grown since the year 2000. The peak around key election years. The data shows a clear preference for Republican candidates, especially from 2008 onward. This might reflect Swiss alignment of ideologies or policies with Republican platforms. In contrast, Democratic contributions also grew, though they remained more modest and stable over the yearly span of this dataset.
+
 ## 3 - Median housing prices in the US
+
+```{r load_data_problem_3}
+median_housing <- read_csv("data/median-housing.csv")
+
+median_housing <- median_housing |>
+  rename(date = DATE) |>
+  rename(price = MSPUS)
+glimpse(median_housing)
+
+recessions <- read_csv("data/recessions.csv")
+glimpse(recessions)
+```
+
+```{r plot_median_prices_problem_3}
+ggplot(data = median_housing, 
+       aes(x = date, y = price)) +
+
+geom_line(color = "darkblue") +
+scale_x_date(breaks = seq(as.Date("1960-01-01"), 
+                          as.Date("2020-01-01"), 
+                          by = "5 years"),
+             labels = date_format("%Y")) +
+
+scale_y_continuous(breaks = seq(0, 400000, by = 40000),
+                   labels = label_number(accuracy = 1, 
+                                         big.mark = ",")) +
+
+labs(
+    title = "Median sales prices of houses sold in the United States",
+    subtitle = "Not seasonally adjusted",
+    x = NULL,
+    y = "Dollars",
+    caption = "Source: Census; HUD"
+) +
+theme_minimal() +
+theme(
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.x = element_blank()
+)
+```
+
+```{r plot_median_prices_recessions_problem_3}
+recessions <- recessions |>
+    mutate(
+        is_recess = if_else(Peak >= as.Date("1963-01-01", 
+                                            format = "%Y-%m-%d") & 
+                            Trough <= as.Date("2021-04-01", 
+                                              format = "%Y-%m-%d"),
+                            TRUE, FALSE)
+    ) |>
+    filter(is_recess == TRUE)
+glimpse(recessions)
+
+ggplot(data = median_housing, 
+       aes(x = date, 
+           y = price)) +
+
+geom_rect(
+    data = recessions,
+    aes(
+        xmin = as.Date(Peak), 
+        xmax = as.Date(Trough),
+        ymin = -Inf, 
+        ymax = Inf,
+        y = NULL,
+        x = NULL
+    ), 
+    fill = "cornsilk3"
+    ) +
+
+geom_line(color = "darkblue") +
+scale_x_date(breaks = seq(as.Date("1960-01-01"), 
+                          as.Date("2020-01-01"), 
+                          by = "5 years"),
+             labels = date_format("%Y")) +
+
+scale_y_continuous(breaks = seq(0, 400000, by = 40000),
+                   labels = label_number(accuracy = 1, big.mark = ",")) +
+
+labs(
+    title = "Median sales prices of houses sold in the United States",
+    subtitle = "Not seasonally adjusted",
+    x = NULL,
+    y = "Dollars",
+    caption = "Shaded areas indicate U.S. recessions\nSource: Census; HUD"
+) +
+theme_minimal() +
+theme(
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.x = element_blank()
+)
+```
 
 ## 4 - Expect More. Plot More.
 

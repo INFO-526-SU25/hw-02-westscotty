@@ -23,6 +23,7 @@ pacman::p_load(
     fs,
     ggridges,
     janitor,
+    paste,
     readr,
     stringr,
     tidyverse,
@@ -41,10 +42,10 @@ devtools::install_github("tidyverse/dsbox")
 
 ```{r set_uniform_displays, include=FALSE}
 # set theme for ggplot2
-ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+# ggplot2::theme_set(ggplot2::theme_minimal(base_size = 10))
 
-# set width of code output
-options(width = 65)
+# # set width of code output
+# options(width = 65)
 
 # set figure parameters for knitr
 knitr::opts_chunk$set(
@@ -182,9 +183,29 @@ uk_spending
 
 ```{r plot_uk_spending_problem_2}
 ggplot(data = uk_spending, 
-       aes(x = year, y = totals, color = party)) +
+       aes(x = year, y = totals / 1e6, color = party)) +
 
-geom_line()
+geom_line() +
+scale_color_manual(values = c("repubs" = "red", 
+                              "dems" = "blue"),
+                  labels = c("Republicans", "Democrats")) +
+scale_x_continuous(breaks = seq(1996, 2022, by = 4),
+                   labels = seq(1996, 2022, by = 4)) +
+scale_y_continuous(labels = function(x) paste0("$", round(x), "M")) +
+
+labs(
+    title = "Contributions to US political parties from UK-connected PACs",
+    color = "Party",
+    x = "Year",
+    y = "Total amount",
+    caption = "Source: OpenSecrets.org"
+) +
+theme_minimal() +
+theme(
+    axis.title.y = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0), hjust = 0),
+    axis.title.x = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0), hjust = 0),
+    legend.position = c(0.87, 0.15)
+)
 
 ```
 

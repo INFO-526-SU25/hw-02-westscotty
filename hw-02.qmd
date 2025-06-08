@@ -9,7 +9,7 @@ editor:
   render-on-save: true
 execute:
   warning: false
-# bibliography: references.bib
+bibliography: references.bib
 ---
 
 ```{r library_setup, include=FALSE}
@@ -21,6 +21,7 @@ pacman::p_load(
     dplyr,
     forcats,
     fs,
+    ggforce,
     ggridges,
     janitor,
     lubridate,
@@ -44,10 +45,10 @@ devtools::install_github("tidyverse/dsbox")
 
 ```{r set_uniform_displays, include=FALSE}
 # set theme for ggplot2
-# ggplot2::theme_set(ggplot2::theme_minimal(base_size = 10))
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
 
-# # set width of code output
-# options(width = 65)
+# set width of code output
+options(width = 65)
 
 # set figure parameters for knitr
 knitr::opts_chunk$set(
@@ -68,10 +69,9 @@ summary(edibnb)
 
 edibnb <- edibnb |>
     mutate(
-        neighbourhood = fct_reorder(
-            neighbourhood, 
-            review_scores_rating, 
-            .fun = median)
+        neighbourhood = fct_reorder(neighbourhood, 
+                                    review_scores_rating, 
+                                    .fun = median)
     ) |>
     filter(!is.na(neighbourhood))
 ```
@@ -202,7 +202,7 @@ labs(
     y = "Total amount",
     caption = "Source: OpenSecrets.org"
 ) +
-theme_minimal() +
+
 theme(
     axis.title.y = element_text(margin = margin(t = 0, r = 0, 
                                                 b = 0, l = 0),
@@ -246,7 +246,7 @@ labs(
     y = "Total amount",
     caption = "Source: OpenSecrets.org"
 ) +
-theme_minimal() +
+
 theme(
     axis.title.y = element_text(margin = margin(t = 0, r = 0, 
                                                 b = 0, l = 0), 
@@ -298,8 +298,9 @@ labs(
     y = "Dollars",
     caption = "Source: Census; HUD"
 ) +
-theme_minimal() +
+
 theme(
+    plot.title.position = "plot",
     panel.grid.minor.x = element_blank(),
     panel.grid.major.x = element_blank(),
     panel.grid.minor.y = element_blank()
@@ -351,8 +352,9 @@ labs(
     y = "Dollars",
     caption = "Shaded areas indicate U.S. recessions\nSource: Census; HUD"
 ) +
-theme_minimal() +
+
 theme(
+    plot.title.position = "plot",
     panel.grid.minor.x = element_blank(),
     panel.grid.major.x = element_blank(),
     panel.grid.minor.y = element_blank()
@@ -363,7 +365,7 @@ theme(
 quarters <- median_housing |>
     mutate(
         year = year(date),
-        quarter = paste0("Q", quarter(date))
+        quarter = paste0("Q", quarter(date)),
         ) |>
     arrange(date) |>
     filter(year %in% c(2019, 2020)) |> glimpse()
@@ -374,22 +376,20 @@ ggplot(data = quarters,
           group = 1)) +
 
 geom_line(color = "darkblue") +
-scale_y_continuous(limits = c(300000, 360000),
-                   breaks = seq(300000, 360000, by = 20000),
-                   labels = label_number(accuracy = 1, big.mark = ","),
-                   expand = c(0.008, 0.008)) +
-
-scale_x_date(breaks = quarters$date,
-             labels = quarters$quarter,
-             expand = c(0.008, 0.008)) +
-
 geom_point(color = "darkblue", 
            size = 2, 
            shape = 21, 
            fill = "white") +
 
-annotate("text", x = as.Date("2019-05-15"), y = 301000, label = "2019", size = 4) +
-annotate("text", x = as.Date("2020-05-15"), y = 301000, label = "2020", size = 4) +
+scale_y_continuous(breaks = seq(300000, 360000, by = 20000),
+                   labels = label_comma()) +
+
+scale_x_date(breaks = quarters$date,
+             labels = quarters$quarter,
+             expand = c(0.008, 0.008)) +
+
+annotate("text", x = as.Date("2019-05-15"), y = 285000, label = "2019", size = 4) +
+annotate("text", x = as.Date("2020-05-15"), y = 285000, label = "2020", size = 4) +
 
 labs(
     title = "Median sales prices of houses sold in the United States",
@@ -398,14 +398,72 @@ labs(
     y = "Dollars",
 ) +
 
-theme_minimal() +
 theme(
+    plot.title.position = "plot",
     panel.grid.minor.x = element_blank(),
-)
+    plot.margin = unit(c(1, 1, 2, 1), "lines"),
+    axis.text.x = element_text(size = 8)
+) +
 
-
+coord_cartesian(ylim = c(300000, 360000), clip = "off")
 ```
 
 ## 4 - Expect More. Plot More.
+
+Found a method for plotting circles in the library ggforce with geom_circle [@geomnet_circle].
+
+```{r make_target_tibble_problem_4}
+
+target_data <- tibble(
+    origin_x = 0,
+    origin_y = 0,
+    circle_radius = c(3, 2, 1),
+    colors = c("red2", "white", "red2")
+)
+ggplot() +
+    geom_circle(data = target_data, 
+                aes(x0 = origin_x, 
+                    y0 = origin_y, 
+                    r = circle_radius[1], 
+                    fill = colors[1]), 
+                color = 'white', 
+                size = 0.5) +
+
+    geom_circle(data = target_data, 
+                aes(x0 = origin_x, 
+                    y0 = origin_y, 
+                    r = circle_radius[2], 
+                    fill = colors[2]), 
+                color = 'white', 
+                size = 0.5) +
+
+    geom_circle(data = target_data, 
+                aes(x0 = origin_x, 
+                    y0 = origin_y, 
+                    r = circle_radius[3], 
+                    fill = colors[3]), 
+                color = 'white', 
+                size = 0.5) +
+
+    scale_fill_identity() +
+    geom_text(aes(x = 0, 
+                  y = -4, 
+                  label = "TARGET"), 
+              size = 9, 
+              fontface = "bold", 
+              color="red2") +
+
+    geom_text(aes(x = 2, 
+                  y = -4.25, 
+                  label = "®"), 
+              size = 7, 
+              fontface = "bold", 
+              color="red2") +
+    
+    coord_fixed(ratio = 1) +
+    theme_void() +
+    theme(plot.margin = margin(20, 20, 40, 20))
+
+```
 
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?

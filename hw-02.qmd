@@ -301,7 +301,8 @@ labs(
 theme_minimal() +
 theme(
     panel.grid.minor.x = element_blank(),
-    panel.grid.major.x = element_blank()
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_blank()
 )
 ```
 
@@ -353,8 +354,56 @@ labs(
 theme_minimal() +
 theme(
     panel.grid.minor.x = element_blank(),
-    panel.grid.major.x = element_blank()
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_blank()
 )
+```
+
+```{r plot_median_prices_quarters_problem_3}
+quarters <- median_housing |>
+    mutate(
+        year = year(date),
+        quarter = paste0("Q", quarter(date))
+        ) |>
+    arrange(date) |>
+    filter(year %in% c(2019, 2020)) |> glimpse()
+
+ggplot(data = quarters, 
+       aes(x = date, 
+           y = price,
+          group = 1)) +
+
+geom_line(color = "darkblue") +
+scale_y_continuous(limits = c(300000, 360000),
+                   breaks = seq(300000, 360000, by = 20000),
+                   labels = label_number(accuracy = 1, big.mark = ","),
+                   expand = c(0.008, 0.008)) +
+
+scale_x_date(breaks = quarters$date,
+             labels = quarters$quarter,
+             expand = c(0.008, 0.008)) +
+
+geom_point(color = "darkblue", 
+           size = 2, 
+           shape = 21, 
+           fill = "white") +
+
+annotate("text", x = as.Date("2019-05-15"), y = 301000, label = "2019", size = 4) +
+annotate("text", x = as.Date("2020-05-15"), y = 301000, label = "2020", size = 4) +
+
+labs(
+    title = "Median sales prices of houses sold in the United States",
+    subtitle = "Not seasonally adjusted",
+    x = NULL,
+    y = "Dollars",
+) +
+
+theme_minimal() +
+theme(
+    panel.grid.minor.x = element_blank(),
+)
+
+
 ```
 
 ## 4 - Expect More. Plot More.

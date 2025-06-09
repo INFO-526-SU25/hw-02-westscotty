@@ -73,7 +73,8 @@ edibnb <- edibnb |>
                                     review_scores_rating, 
                                     .fun = median)
     ) |>
-    filter(!is.na(neighbourhood))
+    filter(!is.na(neighbourhood)) |>
+    glimpse()
 ```
 
 ```{r ridgeline_plot_problem_1}
@@ -130,9 +131,11 @@ list_of_files <- dir_ls(path = "data", regexp = "Foreign Connected PAC")
 
 # read all files and row bind them
 # keeping track of the file name in a new column called year
-pac <- read_csv(list_of_files, id = "year")
-glimpse(pac)
+pac <- read_csv(list_of_files, id = "year") |>
+    glimpse()
 ```
+
+Found a reference to removing a column with select() [@select_column]. Also used str_extract to filter the year [@Stringr2022].
 
 ```{r extend_data_problem_2}
 pac <- pac |>
@@ -148,10 +151,8 @@ pac <- pac |>
         year = str_extract(year, "\\d{4}$"),
         year = as.integer(year)
     ) |>
-
-    select(-total)
-
-pac
+    select(-total) |>
+    glimpse()
 
 pac <- pac |>
     pivot_longer(
@@ -163,9 +164,8 @@ pac <- pac |>
     mutate(
         amount = str_remove(amount, "\\$"),
         amount = as.integer(amount)
-    )
-
-pac
+    ) |>
+    glimpse()
 ```
 
 ```{r summarize_party_amounts_problem_2}
@@ -178,9 +178,8 @@ uk_spending <- pac |>
                      na.rm = TRUE), 
         .groups = "drop") |>
 
-    arrange(year, party)
-
-uk_spending
+    arrange(year, party) |> 
+    glimpse()
 ```
 
 ```{r plot_uk_spending_problem_2}
@@ -191,8 +190,10 @@ geom_line() +
 scale_color_manual(values = c("repubs" = "red", 
                               "dems" = "blue"),
                   labels = c("Democrats", "Republicans")) +
+
 scale_x_continuous(breaks = seq(1996, 2022, by = 4),
                    labels = seq(1996, 2022, by = 4)) +
+
 scale_y_continuous(labels = function(x) paste0("$", round(x), "M")) +
 
 labs(
@@ -224,8 +225,8 @@ swiss_spending <- pac |>
         totals = sum(amount[amount != 0],
                      na.rm = TRUE), 
         .groups = "drop") |>
-
-    arrange(year, party)
+    arrange(year, party) |>
+    glimpse()
 
 
 ggplot(data = swiss_spending, 
@@ -269,9 +270,9 @@ Contributions from Swiss-connected PACs to U.S. political parties have grown sin
 median_housing <- read_csv("data/median-housing.csv")
 
 median_housing <- median_housing |>
-  rename(date = DATE) |>
-  rename(price = MSPUS)
-glimpse(median_housing)
+    rename(date = DATE) |>
+    rename(price = MSPUS) |> 
+    glimpse()
 
 recessions <- read_csv("data/recessions.csv")
 glimpse(recessions)
@@ -388,8 +389,8 @@ scale_x_date(breaks = quarters$date,
              labels = quarters$quarter,
              expand = c(0.008, 0.008)) +
 
-annotate("text", x = as.Date("2019-05-15"), y = 285000, label = "2019", size = 4) +
-annotate("text", x = as.Date("2020-05-15"), y = 285000, label = "2020", size = 4) +
+annotate("text", x = as.Date("2019-05-15"), y = 290000, label = "2019", size = 4) +
+annotate("text", x = as.Date("2020-05-15"), y = 290000, label = "2020", size = 4) +
 
 labs(
     title = "Median sales prices of houses sold in the United States",
@@ -410,7 +411,7 @@ coord_cartesian(ylim = c(300000, 360000), clip = "off")
 
 ## 4 - Expect More. Plot More.
 
-Found a method for plotting circles in the library ggforce with geom_circle [@geomnet_circle].
+Found a method for plotting circles in the library ggforce with geom_circle [@posit_circle_2018], [@ggforce_geom_circle].
 
 ```{r make_target_tibble_problem_4}
 
@@ -451,14 +452,14 @@ ggplot() +
                   label = "TARGET"), 
               size = 9, 
               fontface = "bold", 
-              color="red2") +
+              color = "red2") +
 
-    geom_text(aes(x = 2, 
-                  y = -4.25, 
-                  label = "®"), 
+    geom_text(aes(x = 1.8, 
+                  y = -4.2, 
+                  label = "\U00AE"), ## googled the unicode escape sequence
               size = 7, 
               fontface = "bold", 
-              color="red2") +
+              color = "red2") +
     
     coord_fixed(ratio = 1) +
     theme_void() +
@@ -467,3 +468,60 @@ ggplot() +
 ```
 
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?
+
+```{r default_penguins_problem_5}
+penguins |>
+  glimpse()
+
+ggplot(data = penguins,
+       aes(x = bill_len, 
+           y = body_mass, 
+           color = island)) +
+
+geom_point() +
+labs(
+    x = "Bill Length (mm)",
+    y = "Body Mass (g)",
+    title = "Penguin Body Mass Positively Correlates with Bill Length",
+    subtitle = "By Island",
+    color = "Island"
+)
+```
+
+Found a useful source for changing background panel colors [@RCharts2023]. I changed the background colors of most parts of the graph, including axis text. If you look closely, I also flipped the axis tick mark labels 180 degrees, as well as the x-axis label upside down. Why not?
+
+```{r ugly_penguins_problem_5}
+ggplot(data = penguins,
+       aes(x = bill_len, 
+           y = body_mass, 
+           color = island,
+           shape = species)) +
+
+geom_point(size = 10) +
+
+scale_color_manual(values = c("magenta", "chartreuse", "yellow")) +
+labs(
+    x = "Bill Length (mm)",
+    y = "Body Mass (g)",
+    title = "Penguin Body Mass Positively Correlates with Bill Length",
+    subtitle = "By Island",
+    color = "Island",
+    shape = "Species"
+) +
+
+theme_dark() +
+theme(
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    plot.background = element_rect(fill = "magenta"),         ## magenta background
+    panel.background = element_rect(fill = "cyan"),           ## cyan panel
+    panel.grid.major = element_line(color = "chartreuse"),    ## bright green gridlines
+    panel.grid.minor = element_line(color = "chartreuse"),    ## bright green minor gridlines
+    axis.text = element_text(color = "yellow", angle = 180),  ## yellow axis tick labels
+    axis.title = element_text(color = "yellow", angle = 180), ## yellow axis titles
+    legend.background = element_rect(fill = "chartreuse"),    ## bright green legend background
+    legend.text = element_text(color = "magenta")             ## magenta legend text
+)
+```
